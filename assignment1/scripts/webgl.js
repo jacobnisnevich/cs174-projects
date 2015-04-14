@@ -1,6 +1,6 @@
 var gl;
 
-var numVertices = 36;
+var numVertices = 14;
 
 var pointsArray = [];
 var colorsArray = [];
@@ -23,15 +23,17 @@ var axis = 0;
 var mvMatrix, pMatrix;
 var modelView, projection;
 
+var cBuffer;
+
 var vertices = [
-	vec4(-12.0, -12.0, -8.0, 1.0),
-	vec4(-12.0, -8.0, -8.0, 1.0),
-	vec4(-8.0,  -8.0, -8.0, 1.0),
-	vec4(-8.0, -12.0, -8.0, 1.0),
-	vec4(-12.0, -12.0, -12.0, 1.0),
-	vec4(-12.0,  -8.0, -12.0, 1.0),
-	vec4(-8.0,  -8.0, -12.0, 1.0),
-	vec4(-8.0, -12.0, -12.0, 1.0) 
+	vec4(2.0, 2.0, -2.0, 1.0),
+	vec4(2.0, -2.0, -2.0, 1.0),
+	vec4(-2.0,  -2.0, -2.0, 1.0),
+	vec4(-2.0, 2.0, -2.0, 1.0),
+	vec4(2.0, 2.0, 2.0, 1.0),
+	vec4(2.0,  -2.0, 2.0, 1.0),
+	vec4(-2.0,  -2.0, 2.0, 1.0),
+	vec4(-2.0, 2.0, 2.0, 1.0) 
 ];
 
 var vertexColors = [
@@ -68,11 +70,11 @@ window.onload = function init()
 	var program = initShaders( gl, "vertex-shader", "fragment-shader" );
 	gl.useProgram( program );
 
-	colorCube();
+	createPointsArray();
 	
 	// Load the data into the GPU
 
-	var cBuffer = gl.createBuffer();
+	cBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
 	
@@ -91,36 +93,32 @@ window.onload = function init()
 	modelView = gl.getUniformLocation( program, "modelView" );
 	projection = gl.getUniformLocation( program, "projection" );
 	
+	gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
 	render();
 };
 
-function colorCube() {
-	quad(1, 0, 3, 2);
-	quad(2, 3, 7, 6);
-	quad(3, 0, 4, 7);
-	quad(6, 5, 1, 2);
-	quad(4, 5, 6, 7);
-	quad(5, 4, 0, 1);
-}
-
-function quad(a, b, c, d) {
-	pointsArray.push(vertices[a]); 
-	pointsArray.push(vertices[b]); 
-	pointsArray.push(vertices[c]); 
-	pointsArray.push(vertices[a]); 
-	pointsArray.push(vertices[c]); 
-	pointsArray.push(vertices[d]);
-
-	createColorsArray(a);
+function createPointsArray() {
+	pointsArray.push(vertices[4]); 
+	pointsArray.push(vertices[0]); 
+	pointsArray.push(vertices[7]); 
+	pointsArray.push(vertices[3]); 
+	pointsArray.push(vertices[2]); 
+	pointsArray.push(vertices[0]);
+	pointsArray.push(vertices[1]); 
+	pointsArray.push(vertices[5]); 
+	pointsArray.push(vertices[2]); 
+	pointsArray.push(vertices[6]); 
+	pointsArray.push(vertices[7]); 
+	pointsArray.push(vertices[5]);
+	pointsArray.push(vertices[4]); 
+	pointsArray.push(vertices[0]);
 }
 
 function createColorsArray(index) {
-	colorsArray.push(vertexColors[index]);
-	colorsArray.push(vertexColors[index]);
-	colorsArray.push(vertexColors[index]);
-	colorsArray.push(vertexColors[index]);
-	colorsArray.push(vertexColors[index]);
-	colorsArray.push(vertexColors[index]);
+	colorsArray = [];
+	for (var i = 0; i < 42; i++) {
+		colorsArray.push(vertexColors[index]);
+	}
 }
 
 function render() {
@@ -129,27 +127,24 @@ function render() {
 	var rotation = rotate(rotato, vec3(1, 0, 0));
 
 	// Model-view matrix and Perspective Matrix
-
 	pMatrix = perspective(fovy, aspect, near, far);
 	gl.uniformMatrix4fv( projection, false, flatten(pMatrix) );
 
-	// var cBuffer = gl.createBuffer();
 
 	for (var ztranslate = -40; ztranslate > -61; ztranslate -= 20) {
-		for (var ytranslate = 0; ytranslate < 21; ytranslate += 20) {
-			for (var xtranslate = 0; xtranslate < 21; xtranslate += 20) {
+		for (var ytranslate = -10; ytranslate < 11; ytranslate += 20) {
+			for (var xtranslate = -10; xtranslate < 11; xtranslate += 20) {
 				for (var colorindex = 0; colorindex < 8; colorindex++) {
 					mvMatrix = mat4();
+					// mvMatrix = mult(mvMatrix, rotation);
 					mvMatrix = mult(mvMatrix, translate(xtranslate, ytranslate, ztranslate));
-					mvMatrix = mult(mvMatrix, rotation);
 					gl.uniformMatrix4fv( modelView, false, flatten(mvMatrix) );
 
-					// createColorsArray(colorindex);
-					// 
-					// gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-					// gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
+					createColorsArray(colorindex);
+					
+					gl.bufferData( gl.ARRAY_BUFFER, flatten(colorsArray), gl.STATIC_DRAW );
 
-					gl.drawArrays(gl.TRIANGLES, 0, numVertices);
+					gl.drawArrays(gl.TRIANGLE_STRIP, 0, numVertices);
 				}
 			}
 		}
