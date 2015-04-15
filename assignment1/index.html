@@ -11,8 +11,18 @@
 	uniform mat4 modelView;
 	uniform mat4 projection;
 
+	uniform float theta;
+
 	void main() {
-		gl_Position = projection*modelView*vPosition;
+		float s = sin( theta );
+		float c = cos( theta );
+
+		mat4 rotMatrix = mat4 ( c,   0.0, -s,   0.0,
+								0.0, 1.0,  0.0, 0.0,
+								s,   0.0,  c,   0.0,
+								0.0, 0.0,  0.0, 1.0 );
+
+		gl_Position = projection * modelView * rotMatrix * vPosition;
 		fColor = vColor;
 	} 
 	</script>
@@ -31,8 +41,17 @@
 	<script type="text/javascript" src="scripts/initShaders.js"></script>
 	<script type="text/javascript" src="scripts/MV.js"></script>
 	<script type="text/javascript" src="scripts/webgl.js"></script>
+	<style>
+		#crosshair {
+			position: absolute;
+			z-index: 2;
+			top: 270px;
+			left: 480px;
+		}
+	</style>
 </head>
 <body>
+	<img id="crosshair" src="crosshair.png" style="display: none" />
 	<canvas id="gl-canvas" width="960" height="540">
 		Oops ... your browser doesn't support the HTML5 canvas element
 	</canvas>
